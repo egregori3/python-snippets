@@ -38,6 +38,20 @@ for _question in _questions:
     words = _question.rstrip('\n').split(' ')
     print(words)
 ```
+```
+with open("vacabulary.txt", "r", encoding="utf-8") as f:
+    _vocabulary = [line.rstrip() for line in f]
+
+with open("sentences.txt", "r", encoding="utf-8") as f:
+    _sentences = [line.rstrip() for line in f]
+
+for _sentence in _sentences:
+    _words = _sentence.split(' ')
+    for _word in _words:
+        if _word not in _vocabulary:
+            print(_word)
+```
+
 
 ### json
 
