@@ -32,8 +32,11 @@ class Logger:
 
 ```
 with open("Project1TestQuestions.txt", "r", encoding="utf-8") as f:
-    questions = f.readlines()
-    
+    _questions = f.readlines()
+
+for _question in _questions:
+    words = _question.rstrip('\n').split(' ')
+    print(words)
 ```
 
 ### json
