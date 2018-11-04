@@ -52,6 +52,31 @@ for _sentence in _sentences:
             print(_word)
 ```
 
+### Checking text for vocabulary
+
+```
+with open("vacabulary.txt", "r", encoding="utf-8") as f:
+    _vocabulary = [line.rstrip().lower() for line in f]
+
+with open("sentences.txt", "r", encoding="utf-8") as f:
+    _sentences = [line.rstrip().lower() for line in f]
+
+_max_words_in_sentence = 0
+_new_words = list()
+for _sentence in _sentences:
+    _words = _sentence.split(' ')
+    _max_words_in_sentence = max(_max_words_in_sentence,len(_words))
+    for _word in _words:
+        if _word not in _vocabulary:
+            if not _word.isdigit():
+                _new_words.append(_word)
+_unique_words = set(_new_words)
+for _word in _unique_words:
+    print(_word)
+
+print("Max words in sentence: ", _max_words_in_sentence)
+```
+
 
 ### json
 
