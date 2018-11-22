@@ -127,3 +127,114 @@ def main(argv):
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
 ```
+
+
+### Django Snippets
+
+```
+class Status(View):
+
+    def get(self, request, *args, **kwargs):
+        _status = StatusEntry.objects.values('jwrun')[0]
+        saveit = StatusEntry(id=0, jwrun=False)
+        saveit.save()
+        return JsonResponse(_status)
+
+class UserInput(View):
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('%s?next=%s' % (settings.LOGIN_URL, request.path))
+
+        _page_data = {
+                        'question': request.session.get('nquestion', "Enter question then click Post to Piazza"),
+                        'debugdata': request.session.get('ndebugdata', "")
+                    }
+
+        return render(request, 'indexform.html', _page_data)
+
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('%s?next=%s' % (settings.LOGIN_URL, request.path))
+
+        request.session['ndebugdata'] = ""
+
+        # Read POST data
+        username = request.user.username
+        randomquestion = request.POST.get('randomquestion')
+        posttopiazza = request.POST.get('posttopiazza')
+        postalltopiazza = request.POST.get('postalltopiazza')
+        runjw = request.POST.get('runjw')
+        cleanpiazza = request.POST.get('cleanpiazza')
+
+        if randomquestion is not None:
+            request = self._button_randomquestion(request)
+
+        .......
+
+        return self.get(request, *args, **kwargs)
+
+
+    def _button_randomquestion(self, request):
+        # Database queries
+        all_questions = Log.objects.values('question')
+        request.session['nquestion'] = all_questions[random.randrange(len(all_questions))]['question']
+        return request
+
+    def _button_posttopiazza(self, request):
+        userquestion = request.POST.get('userinput', None)
+        if userquestion == "":
+            request.session['ndebugdata'] = "Please enter a question"
+            return request
+
+        _questions = [a['question'] for a in Log.objects.values('question')]
+        if userquestion not in _questions:
+            logit = Log(question=userquestion)
+            logit.save()
+
+        .......
+
+        request.session['ndebugdata'] = "Posting: "+userquestion
+        return self._post_to_piazza(request, [userquestion])
+
+    def _button_postalltopiazza(self, request):
+        _questions = [a['question'] for a in Log.objects.values('question')]
+        return self._post_to_piazza(request, _questions)
+
+    def _button_runjw(self, request):
+        _saveit = StatusEntry(id=0, jwrun=True)
+        _saveit.save()
+        return request
+
+    def _post_to_piazza(self, request, questions):
+        if not questions:
+            request.session['ndebugdata'] = "Attempting blank post"
+            return request
+
+        ......
+
+        request.session['ndebugdata'] = "Posting Questions:\n"
+        for _question in questions:
+            if _question == "":
+                request.session['ndebugdata'] = "Attempting blank post"
+                break
+
+            post_type = 'question'
+            post_folders = ['other']
+            post_subject = _question
+            post_content = _question
+
+            request.session['ndebugdata'] += (_question+"\n")
+
+            try:
+                my_class.create_post(   post_type,      \
+                                        post_folders,   \
+                                        post_subject,   \
+                                        post_content )
+            except Exception as _err:
+                request.session['ndebugdata'] += "Error posting: "+str(_err)+"\n"
+
+        request.session['ndebugdata'] += "Posting successful: "+str(len(questions))
+        return request
+```
