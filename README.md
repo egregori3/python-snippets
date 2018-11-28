@@ -26,6 +26,8 @@ class Logger:
         self._log_file.write("\n\n")
         self._result_file.write("\n\n")
         self._log_file.close()
+        
+_logger.logmsg("\n"+"".join(traceback.format_exc()))
 ```
 
 ### Text
