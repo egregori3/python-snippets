@@ -238,3 +238,18 @@ class UserInput(View):
         request.session['ndebugdata'] += "Posting successful: "+str(len(questions))
         return request
 ```
+
+### Redirecting IO
+
+```
+    print("Redirecting to file: " + _pathfile + ".out")
+    try:
+        redirect = open(_pathfile + ".out", "w")
+    except:
+        print("Failed to open redirection file")
+        return 1
+
+    with redirect_stdout(redirect):
+        _agent = AgentInterface(parameters['verbose'])
+
+```
