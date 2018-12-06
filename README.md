@@ -255,3 +255,38 @@ class UserInput(View):
         _agent = AgentInterface(parameters['verbose'])
 
 ```
+
+### S3 Access
+
+'''
+import boto3
+import botocore
+from boto3.session import Session
+
+class S3Interface:
+
+    def __init__(self):
+        self.aws_access_key_id=""
+        self.aws_secret_access_key= ""
+        self.bucket="s3.xxxxxxxxxxx"
+
+    def GetS3Object(self,key):
+        s3 = boto3.resource('s3',
+                            aws_access_key_id = self.aws_access_key_id,
+                            aws_secret_access_key = self.aws_secret_access_key)
+        obj = s3.Object(self.bucket, key)
+        try:
+            textdata = obj.get()['Body'].read().decode('utf-8')
+        except botocore.exceptions.ClientError as e:
+            return e.response['Error']['Message']
+        return(textdata)
+
+    # Limited to returning 1000 filenames
+    def GetListofOjects(self):
+        session = Session(aws_access_key_id=self.aws_access_key_id,
+                         aws_secret_access_key=self.aws_secret_access_key)
+        s3 = session.resource('s3')
+        your_bucket = s3.Bucket(self.bucket)
+    
+        return [s3_file.key for s3_file in your_bucket.objects.all()]
+'''
