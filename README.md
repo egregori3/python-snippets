@@ -290,3 +290,22 @@ class S3Interface:
     
         return [s3_file.key for s3_file in your_bucket.objects.all()]
 ```
+
+### S3 access using roles
+
+Access S3 using an IAM role: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html
+The EC2 instance is assigned a role. It will automatically manage the credentials.
+The S3 bucket is configured to only allow access from that role.
+https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html
+When using roles, there is no need to hardcode credentials for boto3.
+
+```
+aws iam get-user
+aws iam get-role --role-name <role name>
+```
+
+#### Backup S3
+https://martinbuberl.com/blog/backup-amazon-s3-bucket-with-aws-cli/
+
+
+
