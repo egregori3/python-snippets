@@ -383,16 +383,5 @@ class PiazzaInterface:
     def instructorPost(self, answer, id):
         self._myclass.create_instructor_answer({'id':id}, answer, 0)
 
-
-def main(argv):
-    piazzaIO = PiazzaInterface(email=argv[1], password=argv[2], network=argv[3])
-    piazzaIO.getPosts()
-    if argv[4]: 
-        piazzaIO.instructorPost("Posted by piazzaTest.py", argv[4])
-    sys.exit(0)
-
-
-if __name__ == '__main__':
-    sys.exit(main(sys.argv))
 ```
 
