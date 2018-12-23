@@ -312,43 +312,76 @@ https://martinbuberl.com/blog/backup-amazon-s3-bucket-with-aws-cli/
 
 ```
 from piazza_api import Piazza
-import json, sys
+import json
 
 class PiazzaInterface:
 
-    def __init__(self, email, password, network, debug=False):
-        piazza = Piazza()
-        piazza.user_login(email=email, password=password)
-        self.myclass = piazza.network(network)
-        self.debug = True
-
-
-    def instructorPost(self, answer, cid):
-        self.myclass.create_instructor_answer({'id':cid}, answer, 0)
+    def __init__(self, question_field, email, password, network, debug=False):
+        _piazza = Piazza()
+        _piazza.user_login(email=email, password=password)
+        self._myclass = _piazza.network(network)
+        self._debug = debug
+        self._question_field = question_field
 
 
     def getPosts(self):
         # Get list of cid's from feed
-        feed = self.myclass.get_feed(limit=999999, offset=0)
-        cids = [post['id'] for post in feed["feed"]]
+        _feed = self._myclass.get_feed(limit=999999, offset=0)
+        _ids = [_post['id'] for _post in _feed["feed"]]
 
-        if self.debug:
-            with open('feed.json', 'w') as outfile:
-                json.dump(feed, outfile)
+        if self._debug:
+            with open('feed.json', 'w') as _outfile:
+                json.dump(_feed, _outfile)
 
-        posts = []
-        for cid in cids:
-            post = self.myclass.get_post(cid)
-            print("\ncid = "+str(post['nr']))
-            print("id = "+str(post['id']))
-            print(" - "+post['history'][0]['subject'])
-            posts.append(post)
+        _posts = []
+        for _id in _ids:
+            _post = self._myclass.get_post(_id)
+            _posts.append(_post)
 
-        if self.debug:
-            with open('posts.json', 'w') as outfile:
-                json.dump(posts, outfile)
+        if self._debug:
+            with open('posts.json', 'w') as _outfile:
+                json.dump(_posts, _outfile)
 
-        return posts
+        return _posts
+
+
+    def getID(self, postData):
+        return postData['id']
+
+
+    def getQuestion(self, postData):
+        return postData[self._question_field]
+
+
+    def getInstructorResponse(self, postData):
+        return postData['instructor_answer']
+
+
+    def _postData(self, _id, domains, subject, content, instructor_answer):
+        return {'id':_id, 
+                'domains':domains, 
+                'subject':subject, 
+                'content':content, 
+                'instructor_answer':instructor_answer}
+
+    def parsePost(self, post):
+        _parsePost = {}
+        if post['type'] == "question":
+            _id = post['id']
+            _domains = post['folders'] 
+            _subject = post['history'][-1]['subject']
+            _content = post['history'][-1]['content']
+            _instructor_answer = ""
+            for _child in post['children']:
+                if _child['type'] == "i_answer":
+                   _instructor_answer = _child['history'][-1]['content']
+                break
+            _parsePost = self._postData(_id, _domains, _subject, _content, _instructor_answer)
+        return _parsePost
+
+
+    def instructorPost(self, answer, id):
+        self._myclass.create_instructor_answer({'id':id}, answer, 0)
 
 
 def main(argv):
