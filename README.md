@@ -308,4 +308,58 @@ aws iam get-role --role-name <role name>
 https://martinbuberl.com/blog/backup-amazon-s3-bucket-with-aws-cli/
 
 
+### Piazza interface snippets
+
+```
+from piazza_api import Piazza
+import json, sys
+
+class PiazzaInterface:
+
+    def __init__(self, email, password, network, debug=False):
+        piazza = Piazza()
+        piazza.user_login(email=email, password=password)
+        self.myclass = piazza.network(network)
+        self.debug = True
+
+
+    def instructorPost(self, answer, cid):
+        self.myclass.create_instructor_answer({'id':cid}, answer, 0)
+
+
+    def getPosts(self):
+        # Get list of cid's from feed
+        feed = self.myclass.get_feed(limit=999999, offset=0)
+        cids = [post['id'] for post in feed["feed"]]
+
+        if self.debug:
+            with open('feed.json', 'w') as outfile:
+                json.dump(feed, outfile)
+
+        posts = []
+        for cid in cids:
+            post = self.myclass.get_post(cid)
+            print("\ncid = "+str(post['nr']))
+            print("id = "+str(post['id']))
+            print(" - "+post['history'][0]['subject'])
+            posts.append(post)
+
+        if self.debug:
+            with open('posts.json', 'w') as outfile:
+                json.dump(posts, outfile)
+
+        return posts
+
+
+def main(argv):
+    piazzaIO = PiazzaInterface(email=argv[1], password=argv[2], network=argv[3])
+    piazzaIO.getPosts()
+    if argv[4]: 
+        piazzaIO.instructorPost("Posted by piazzaTest.py", argv[4])
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
+```
 
