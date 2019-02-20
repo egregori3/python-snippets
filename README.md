@@ -99,6 +99,8 @@ with open('TestQuestions.json', 'w') as outfile:
 
 ### Command Line Interface
 
+Using a ';' instead of a ':' results in a silent failure.
+
 ```
 import sys, getopt
 
