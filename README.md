@@ -118,9 +118,9 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-v"):  # -v verbose
             parameters['verbose'] = True
-        if opt in ("-f"):  # -f <json containing dictionary frames>
+        elif opt in ("-f"):  # -f <json containing dictionary frames>
             parameters['frames'] = arg
-        if opt in ("-l"):  # -l <path/filename to log file>
+        elif opt in ("-l"):  # -l <path/filename to log file>
             parameters['log'] = arg
 
     return AgentAutograder(parameters)
