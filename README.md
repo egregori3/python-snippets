@@ -387,3 +387,25 @@ class PiazzaInterface:
 
 ```
 
+### File IO
+
+```
+def txt_file_to_list(path):
+    list_of_lines = []
+    with open(path, encoding="utf-8") as f:
+        list_of_lines = f.readlines()
+    return list_of_lines
+
+
+def txt_file_to_string(path):
+    string = ""
+    with open(path, encoding="utf-8") as f:
+        string = f.read()
+    return string
+
+
+def string_to_txt_file(path, string):
+    with open(path, 'w') as f:
+        f.write(string)
+
+```
