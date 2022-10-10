@@ -18,43 +18,21 @@ class AnalyzeLog:
         self._log_db = []
         self.log_lines = 0
         self.csv_lines = 0
-        if args['log']:
+        if 'log' in args and args['log']:
             self._process_log_into_db(args['log'], args['sof'], args['eof'], args['stop'], args['filter'])
             args['log'].close()
         else:
             raise("Cannot open log file")
         if not self._log_db:
             raise("No frames found, are you using the correct SOF/EOF strings? ({},{})".format(args['sof'], args['eof']))
-        if args['csv']:
-            self._write_db_to_csv(args['csv'], args['minflds'])
+        if args['prev']:
+            self._add_changed_line()
+        if 'csv' in args and args['csv']:
+            self.csv_lines = self.write_db_to_csv( self._log_db, args['csv'], args['minflds'] )
             args['csv'].close()
-        if args['dump']:
-            self._print_db()
+        if 'dump' in args and args['dump']:
+            self.print_db( self._log_db )
 
-    def _write_db_to_csv( self, csv, minflds ):
-        # Write db to csv file if args.csv is set
-        fields = []
-        lines = 0
-        print("Writing CSV file: ", end="", flush=True)
-        if minflds == None or len(self._log_db) > minflds:
-            for db in self._log_db:
-                for key in db:
-                    if key not in fields:
-                        fields.append(key)
-            for field in fields:
-                csv.write(field+',')
-            csv.write('\n')
-            for db in self._log_db:
-                for field in fields:
-                    if field in db:
-                        csv.write(db[field])
-                    csv.write(',')
-                csv.write('\n')
-                lines = lines + 1
-                if lines % (len(db)/60) == 0:
-                    print("*", end="", flush=True)
-        print("Wrote {} lines\n".format(lines))
-        self.csv_lines = lines
 
     def _parse_line(self, db, line):
         parse1 = line.split('|')
@@ -66,6 +44,7 @@ class AnalyzeLog:
                 if "]" in parse2[1]:
                     parse2[1] = parse2[1].partition("]")[0]
                 db[parse2[0].strip()] = parse2[1].strip()
+
 
     def _process_log_into_db( self, log, sof, eof, stop, filter_list ):
         line_num     = 0
@@ -102,7 +81,11 @@ class AnalyzeLog:
                     for string in filter_list:
                         if string in line:
                             process_line = True
-                            line_db['Data'] = string
+                            if 'Data' in line_db:
+                                if string not in line_db['Data']:
+                                    line_db['Data'] = line_db['Data']+' '+string
+                            else:
+                                line_db['Data'] = string
                 if process_line:
                     if "|" in line:
                         self._parse_line(line_db, line)
@@ -111,14 +94,57 @@ class AnalyzeLog:
         print("\n\nProcessed {} lines\n".format(line_num))
         self.log_lines = line_num
 
-    def _print_db(self):
+
+    def _add_changed_line( self ):
         prev_db = {}
         for db in self._log_db:
+            new_db = {}
             for key in db:
-                print(key+" = "+db[key], end="")
                 if key in prev_db and key not in [SOF_LINE_NUM_FIELD, EOF_LINE_NUM_FIELD, STRING_FIELD]:
                     if prev_db[key] != db[key]:
-                        print("   previous: "+key+" = "+prev_db[key], end="")
+                        new_db['previous_'+key] = prev_db[key]
+            prev_db = db
+            db.update(new_db)
+
+
+    def write_db_to_csv( self, log_db, csv, minflds ):
+        # Write db to csv file if args.csv is set
+        fields = []
+        lines = 0
+        print("Writing CSV file: ", end="", flush=True)
+        if minflds == None or len(log_db) > minflds:
+            # get fields
+            for db in log_db:
+                for key in db:
+                    if key not in fields:
+                        fields.append(key)
+            # write headers
+            for field in fields:
+                csv.write(field+',')
+            csv.write('\n')
+            # write data
+            prev_db = {}
+            for db in log_db:
+                # write line
+                for field in fields:
+                    if field in db:
+                        csv.write(db[field])
+                    csv.write(',')
+                csv.write('\n')
+                lines = lines + 1
+                # after writing lines
+                prev_db = db
+                if lines % (len(db)/60) == 0:
+                    print("*", end="", flush=True)
+        print("\n\nWrote {} lines\n".format(lines))
+        return lines
+
+
+    def print_db( self, log_db ):
+        prev_db = {}
+        for db in log_db:
+            for key in db:
+                print(key+" = "+db[key], end="")
                 print()
             prev_db = db
             print()
@@ -126,10 +152,16 @@ class AnalyzeLog:
             print("******************************************")
             print()
 
-    def print_stats(self):
+
+    def get_db( self ):
+        return self._log_db
+
+
+    def print_stats( self ):
         print("Processed {} log lines\n".format(self.log_lines))
         if self.csv_lines > 0:
             print("Wrote {} csv lines\n".format(self.csv_lines))
+
 
 if __name__ == "__main__":
     #
@@ -159,22 +191,24 @@ if __name__ == "__main__":
     parser.add_argument('--stop',    type=str, help='Stop string - analysis tops when this string is found')
     parser.add_argument('--profile', action='store_true', help='Post process for profile switching analysis')
     parser.add_argument('--dump',    action='store_true', help='Dump to stdout')
+    parser.add_argument('--prev',    action='store_true', help='Output differences')
     a = parser.parse_args()
 
     try:
         analyze_obj = AnalyzeLog({  'log':a.log,
-                                    'csv':a.csv,
                                     'sof':a.sof,
                                     'eof':a.eof,
+                                    'csv':a.csv,
                                     'filter':a.filter.split(','),
                                     'minflds':a.minflds,
                                     'stop':a.stop,
                                     'profile':a.profile,
-                                    'dump':a.dump})
+                                    'dump':a.dump,
+                                    'prev':a.prev})
     except CustomError as e:
         print("!ERROR! " + str(e))
-
-    print()
-    analyze_obj.print_stats()
-
-    print("Done")
+    else:
+        print()
+        analyze_obj.print_stats()
+        print()
+        print("Done")
