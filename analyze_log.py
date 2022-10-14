@@ -32,7 +32,7 @@ class AnalyzeLog:
 
         self.log_lines = self._process_log_into_db( parms )
         if not self._log_db:
-            raise("No frames found, are you using the correct SOF/EOF strings? ({},{})".format(args['sof'], args['eof']))
+            raise("No frames found, are you using the correct SOF/EOF strings? ({},{})".format(parms['sof'], parms['eof']))
         if 'prev' in parms and parms['prev']:
             self._add_changed_line()
 
@@ -91,8 +91,9 @@ class AnalyzeLog:
                 if not in_frame:
                     raise CustomError("Error EOF before SOF: "+str(line_num))
                 if line_db:
-                    line_db[EOF_LINE_NUM_FIELD] = str(line_num)
-                    line_db[SOF_LINE_NUM_FIELD] = str(sof_line_num)
+                    if 'lines' in parms and parms['lines']:
+                        line_db[EOF_LINE_NUM_FIELD] = str(line_num)
+                        line_db[SOF_LINE_NUM_FIELD] = str(sof_line_num)
                     self._log_db.append(line_db)
                 in_frame = False
                 if line_num % 50 == 0:
